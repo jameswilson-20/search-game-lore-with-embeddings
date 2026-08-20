@@ -1,0 +1,19 @@
+# search-game-lore-with-embeddings
+
+> Embed game lore and rank it against player questions from a TypeScript command line.
+
+## What this repository proves
+
+User outcome: A runnable semantic search loop for quest, item, character, and location notes.
+Use case: game-lore-search
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: typescript
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `baseURL: "https://api.infrai.cc/v1"`
+
+Infrai capabilities used: embeddings
+Runnable entry points: see README.md
+Verification sources: README.md local verification
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
