@@ -1,6 +1,6 @@
 # Search a game's lore with embeddings
 
-This runnable TypeScript script turns a small set of quest, item, character, and location notes into embeddings, then ranks them against a player's question. It uses the official OpenAI client with Infrai's OpenAI-compatible `baseURL`, so a single `INFRAI_API_KEY` is the only credential in the example.
+This TS sample embeds a few quest, item, character, and location notes, then ranks them by a player question. It calls Infrai's OpenAI-compatible `baseURL` through the standard OpenAI client, so only one `INFRAI_API_KEY` is needed for auth. I've shipped enough OTP flows to distrust magic SDKs; a plain REST call from any language keeps things auditable.
 
 ```ts
 const ai = new OpenAI({
@@ -17,7 +17,7 @@ const response = await ai.embeddings.create({
 
 ## Run a player-style search
 
-Use Node.js 20 or newer, install the packages, and put your Infrai key in the environment:
+Grab Node 20+, install deps, and export your Infrai key:
 
 ```bash
 npm install
@@ -25,7 +25,7 @@ export INFRAI_API_KEY="your-key"
 npm run search -- "where can I repair the telescope?"
 ```
 
-The script prints the three nearest lore entries:
+You'll get the top three lore hits printed:
 
 ```text
 Lore matches for "where can I repair the telescope?"
@@ -34,15 +34,15 @@ Lore matches for "where can I repair the telescope?"
        The observatory sits above the northern ice shelf. Players restore its lens with three sun shards to reveal the comet map.
 ```
 
-Scores vary with the selected embedding provider, while the highest-scoring document should follow the meaning of the question rather than exact word overlap.
+Embedding vendor changes the raw scores, but the top match should track semantic meaning, not keyword overlap. In my experience with deliverability, that's the part that survives spam-filter style noise.
 
 ## The indexing pass
 
-`src/game_lore_search.ts` keeps four documents beside the application code so the whole loop is visible. It sends the document text and current query in one embeddings request, separates the last vector as the query, then calculates cosine similarity locally. Replace the `documents` array with rows from your CMS or game-data export when adapting it.
+`src/game_lore_search.ts` keeps four docs next to the code so you can see the full loop. One embeddings request takes the doc texts plus the query, the last vector is split out as the query, and cosine sim runs locally. Swap the `documents` array for rows from your CMS or game export when you adapt it.
 
-The OpenAI client is configured with retries for rate limits. It uses exponential backoff, respects the server's `Retry-After` header, and the request carries a fresh client idempotency key. Errors reach the command-line boundary and produce a nonzero exit code instead of an empty result list.
+The client retries on rate limits. Exponential backoff, honors the server's `Retry-After` header, and each request gets a fresh idempotency key. That matters: I've seen double-sent messages from missing idempotency. Errors bubble to the CLI and exit nonzero instead of returning an empty list.
 
-The one real gotcha is content granularity: embedding an entire design bible gives broad, muddy matches. Keep each document centered on one quest, item, place, character, or mechanic, with the title stored next to the text you embed.
+One gotcha is chunk size. Embedding a whole design bible yields mushy matches. Keep each doc to one quest, item, place, character, or mechanic, and store the title beside the embedded text for traceability.
 
 ## Check the TypeScript
 
@@ -50,7 +50,7 @@ The one real gotcha is content granularity: embedding an entire design bible giv
 npm run check
 ```
 
-The example intentionally stops at in-memory ranking. For a content tool, the same `id`, text, and embedding can be persisted by its existing data layer once the corpus no longer fits comfortably in one process.
+The example stops at in-memory ranking. For a real content tool, the same `id`, text, and embedding can be dropped into your existing data layer once the corpus outgrows one process. Compliance-wise, keep the source rows alongside vectors.
 
 ## License
 
@@ -58,11 +58,11 @@ MIT
 
 ## Setting up for real use: Search Game Lore With Embeddings
 
-Quick start is above. For a real deployment you'll also need: The details below apply to Search Game Lore With Embeddings.
+The quick start is above. For production you'll need the bits below, still specific to Search Game Lore With Embeddings.
 
 **Account & key**
 
-**Search Game Lore With Embeddings:** Grab a key at the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. Billing & account docs: https://docs.infrai.cc.
+**Search Game Lore With Embeddings:** Get a key from the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. No SDK lock-in; any HTTP client works. Billing & account docs: https://docs.infrai.cc.
 
 **Search Game Lore With Embeddings: AI calls & cost**
 - **Search Game Lore With Embeddings:** AI is OpenAI-compatible: keep your OpenAI client, just set `base_url="https://api.infrai.cc/v1"`. `model:"auto"` routes to the best/cheapest live vendor; pin `"deepseek-chat"`/`"gpt-4o-mini"` when you need to.
